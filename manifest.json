@@ -1,0 +1,9 @@
+{
+  "name": "Maths Reminder – Teacher Edition",
+  "short_name": "Maths Reminder",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f6fb",
+  "theme_color": "#082f63",
+  "description": "A personal mathematics teaching timetable and reminder app."
+}
