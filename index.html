@@ -46,7 +46,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:12px 8px 28p
   <section class="card">
     <h2>Reminder controls</h2>
     <div class="row">
-      <button id="enableBtn">Enable notifications</button>
+      <button id="enableBtn">Enable notifications</button><button id="testBtn" class="secondary">Send test notification</button>
       <button id="startBtn" class="gold">Start reminders</button>
       <button id="stopBtn" class="secondary">Pause reminders</button>
     </div>
@@ -170,13 +170,24 @@ function renderTable(){
 }
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeView=b.dataset.view;renderTable();});
 function updateStatus(msg,warn=false){$('notifyStatus').textContent=msg;$('notifyStatus').className='status'+(warn?' warn':'');}
-$('enableBtn').onclick=async()=>{if(!('Notification'in window)){updateStatus("This browser does not support notifications. Try Chrome on Android.",true);return;}let p=await Notification.requestPermission();updateStatus(p==="granted"?"Notifications enabled. Tap “Start reminders” to begin checking lessons.": "Notifications were not allowed. Enable them in your browser settings.",p!=="granted");};
-function notify(title,body){if('Notification'in window&&Notification.permission==="granted"){try{new Notification(title,{body,icon:"icon-192.png",tag:title+body});}catch(e){}}if($('sound').value==="beep"){try{let a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.07;o.start();setTimeout(()=>{o.stop();a.close()},350);}catch(e){}}}
+$('enableBtn').onclick=async()=>{if(!('Notification'in window)){updateStatus("This browser does not support notifications. Try Chrome on Android.",true);return;}let p=await Notification.requestPermission();updateStatus(p==="granted"?"Notifications enabled. Tap “Start reminders” to begin checking lessons.": "Notifications were not allowed. Enable them in your browser settings.",p!=="granted");};\n$('testBtn').onclick=async()=>{if(!('Notification'in window)){updateStatus("This browser does not support notifications. Try Chrome on Android.",true);return;}if(Notification.permission!=="granted"){updateStatus("Tap Enable notifications and allow permission first.",true);return;}await notify("Maths Reminder test","If you can see this, notifications are working.");updateStatus("Test notification requested. Check your notification shade.");};
+async function notify(title,body){
+ let shown=false;
+ try { if ('serviceWorker' in navigator && Notification.permission === "granted") {
+   const reg = await navigator.serviceWorker.ready;
+   if (reg && reg.showNotification) { await reg.showNotification(title,{body,tag:title+body,vibrate:[200,100,200]}); shown=true; }
+ } } catch(e) {}
+ if (!shown && 'Notification' in window && Notification.permission === "granted") {
+   try { new Notification(title,{body,tag:title+body}); shown=true; } catch(e) {}
+ }
+ if ($('sound').value==="beep") { try { let a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.07;o.start();setTimeout(()=>{o.stop();a.close()},350); } catch(e) {} }
+ if (!shown) { $('notifyStatus').textContent = "Reminder due: " + title + " — " + body + " (browser notification could not be displayed)."; $('notifyStatus').className="status warn"; }
+}
 function checkReminders(){
  let now=new Date(),lead=+$('lead').value;
  schedule.forEach(x=>{let d=toDate(x.day,x.time);if(!d)return;let diff=Math.round((d-now)/60000);let key=`${x.group}-${d.toDateString()}-${x.time}`;if(diff>=0&&diff<=lead&&!sentKeys.has(key)){notify("Maths lesson soon",`${x.group} starts at ${x.time} (${diff===0?"now":`in ${diff} minute${diff===1?"":"s"}`}).`);sentKeys.add(key);}});
  let customs=JSON.parse(localStorage.getItem("mathsCustomReminders")||"[]");
- customs.forEach((x,i)=>{let d=new Date(x.datetime),diff=Math.round((d-now)/60000),key="custom-"+i+"-"+x.datetime;if(diff>=0&&diff<=lead&&!sentKeys.has(key)){notify("Personal reminder",x.title);sentKeys.add(key);}});
+ customs.forEach((x,i)=>{let d=new Date(x.datetime),diff=Math.round((d-now)/60000),key="custom-"+i+"-"+x.datetime;if(diff<=0&&diff>=-1&&!sentKeys.has(key)){notify("Personal reminder",x.title);sentKeys.add(key);}});
 }
 $('startBtn').onclick=()=>{if(timer)clearInterval(timer);checkReminders();timer=setInterval(checkReminders,20000);localStorage.setItem("mathsRemindersRunning","yes");updateStatus("Reminders are running while this app stays open. Allow notifications and keep your phone from putting the browser to sleep.");};
 $('stopBtn').onclick=()=>{if(timer)clearInterval(timer);timer=null;localStorage.setItem("mathsRemindersRunning","no");updateStatus("Reminders paused. Open this app and tap Start reminders when ready.",true);};
