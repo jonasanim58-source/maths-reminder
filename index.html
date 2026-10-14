@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#082f63">
+<title>Maths Reminder – Teacher Edition</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--navy:#082f63;--teal:#087f8c;--gold:#ffc83d;--bg:#f2f6fb;--ink:#142943;--muted:#61748b;--line:#d8e3ef}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}
+header{background:linear-gradient(135deg,#082f63,#087f8c);color:white;padding:25px 18px 22px;border-bottom:5px solid var(--gold)}
+header h1{margin:0;font-size:1.55rem;line-height:1.15}header p{margin:8px 0 0;opacity:.92}
+main{max-width:900px;margin:auto;padding:15px}
+.card{background:#fff;border-radius:16px;padding:16px;margin:0 0 14px;box-shadow:0 3px 14px #0b31520d;border:1px solid #e5edf5}
+h2{font-size:1.12rem;margin:0 0 12px;color:var(--navy)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button,select,input{font:inherit;border-radius:10px;border:1px solid #cbd8e6;padding:10px 12px}
+button{background:var(--navy);color:white;border:0;font-weight:700;cursor:pointer}
+button.secondary{background:#e8f2f6;color:var(--navy);border:1px solid #c6dce6}
+button.gold{background:var(--gold);color:#1d2b3a}
+label{display:block;font-size:.9rem;font-weight:650;margin:9px 0 5px}
+input,select{width:100%;background:#fff;color:var(--ink)}
+.field{flex:1;min-width:130px}
+.status{padding:11px 12px;background:#edf7f7;border-radius:10px;color:#07545c;font-size:.92rem}
+.warn{background:#fff5d7;color:#664b00}
+.small{font-size:.85rem;color:var(--muted);line-height:1.45}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tabs button{flex:1;min-width:100px}
+.tabs button.active{background:var(--teal)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#e9f3fa;color:var(--navy)}
+.day{font-weight:750;white-space:nowrap}.empty{color:#8b98a7}
+.lesson{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.lesson:last-child{border-bottom:0}
+.lesson strong{display:block}.lesson small{color:var(--muted)}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e5f6f5;color:#075c64;font-size:.76rem;font-weight:750;white-space:nowrap}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:12px 8px 28px}
+.hidden{display:none!important}
+@media(max-width:540px){header h1{font-size:1.35rem}table{font-size:.78rem}th,td{padding:8px 5px}.card{padding:13px}.lesson{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔔 Maths Reminder</h1>
+  <p>Teacher Edition · Your timetable and lesson alerts</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Reminder controls</h2>
+    <div class="row">
+      <button id="enableBtn">Enable notifications</button><button id="testBtn" class="secondary">Send test notification</button>
+      <button id="startBtn" class="gold">Start reminders</button>
+      <button id="stopBtn" class="secondary">Pause reminders</button>
+    </div>
+    <p id="notifyStatus" class="status" style="margin-bottom:9px">Notifications have not been checked yet.</p>
+    <div class="row">
+      <div class="field"><label for="lead">Alert before lesson</label>
+        <select id="lead"><option value="5">5 minutes</option><option value="10" selected>10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option></select>
+      </div>
+      <div class="field"><label for="sound">Alert sound</label>
+        <select id="sound"><option value="vibrate">Vibration / notification</option><option value="beep">Beep while app is open</option></select>
+      </div>
+    </div>
+    <p class="small">Important: on Android, this web app can reliably check reminders while it is open. Browsers may suspend background timers when the app is closed or the phone is in battery-saving mode. For best results, keep it open, allow notifications, and set battery use to unrestricted if your phone offers that option.</p>
+  </section>
+
+  <section class="card">
+    <h2>Today's lessons</h2>
+    <div id="todaySummary" class="status">Loading today's lessons…</div>
+    <div id="todayLessons"></div>
+  </section>
+
+  <section class="card">
+    <h2>Weekly timetable</h2>
+    <div class="tabs">
+      <button class="active" data-view="primary">Class 6 & Form 1A</button>
+      <button data-view="jhs">Form 1B–Form 3</button>
+      <button data-view="jhs3">JHS 3 alternating</button>
+    </div>
+    <div id="timetable"></div>
+  </section>
+
+  <section class="card">
+    <h2>JHS 3 alternating weeks</h2>
+    <p class="small">Choose the week type yourself. The notebook lists even weeks 6, 8, 10, 12, 14 and odd weeks 5, 7, 9, 11, 13. Some entries did not show a clear time, so they are marked “Time not specified”.</p>
+    <div class="row">
+      <div class="field"><label for="weekType">Current week type</label><select id="weekType"><option value="even">Even week</option><option value="odd">Odd week</option></select></div>
+      <div class="field"><label for="weekNumber">Week number (optional)</label><select id="weekNumber"><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option></select></div>
+    </div>
+    <button id="saveWeek" style="margin-top:12px">Save week selection</button>
+    <p id="weekStatus" class="small"></p>
+  </section>
+
+  <section class="card">
+    <h2>Personal reminder</h2>
+    <p class="small">Add a one-time reminder for lesson preparation, marking, or teaching materials.</p>
+    <label for="customTitle">Reminder title</label><input id="customTitle" placeholder="e.g. Prepare fractions lesson">
+    <div class="row">
+      <div class="field"><label for="customDate">Date</label><input id="customDate" type="date"></div>
+      <div class="field"><label for="customTime">Time</label><input id="customTime" type="time"></div>
+    </div>
+    <button id="addCustom" style="margin-top:12px">Add reminder</button>
+    <div id="customList"></div>
+  </section>
+  <footer>Maths Reminder · Works offline after the app files have been opened once on a supported browser.</footer>
+</main>
+<script>
+const schedule = [
+ {day:1,group:"Class 6A",time:"1:00pm",end:"2:00pm"},
+ {day:2,group:"Class 6A",time:"2:00pm",end:"3:00pm"},
+ {day:5,group:"Class 6A",time:"11:30am",end:"12:30pm"},
+ {day:1,group:"Class 6B",time:"11:30am",end:"12:30pm"},
+ {day:2,group:"Class 6B",time:"1:00pm",end:"2:00pm"},
+ {day:3,group:"Class 6B",time:"1:00pm",end:"2:00pm"},
+ {day:4,group:"Class 6B",time:"10:30am",end:"11:30am"},
+ {day:5,group:"Class 6B",time:"10:30am",end:"11:30am"},
+ {day:1,group:"Form 1A",time:"4:00pm",end:"5:00pm"},
+ {day:2,group:"Form 1A",time:"11:30am",end:"12:30pm"},
+ {day:3,group:"Form 1A",time:"9:00am",end:"10:00am"},
+ {day:4,group:"Form 1A",time:"4:00pm",end:"5:00pm"},
+ {day:5,group:"Form 1A",time:"4:00pm",end:"5:00pm"},
+ {day:1,group:"Form 1B",time:"3:00pm",end:"4:00pm"},
+ {day:2,group:"Form 1B",time:"10:30am",end:"11:30am"},
+ {day:3,group:"Form 1B",time:"4:00pm",end:"5:00pm"},
+ {day:4,group:"Form 1B",time:"3:00pm",end:"4:00pm"},
+ {day:5,group:"Form 1B",time:"3:00pm",end:"4:00pm"},
+ {day:1,group:"Form 2",time:"10:30am",end:"11:30am"},
+ {day:2,group:"Form 2",time:"9:00am",end:"10:00am"},
+ {day:3,group:"Form 2",time:"3:00pm",end:"4:00pm"},
+ {day:4,group:"Form 2",time:"2:00pm",end:"3:00pm"},
+ {day:5,group:"Form 2",time:"2:00pm",end:"3:00pm"},
+ {day:1,group:"Form 3",time:"9:00am",end:"10:00am"},
+ {day:2,group:"Form 3",time:"4:00pm",end:"5:00pm"},
+ {day:3,group:"Form 3",time:"2:00pm",end:"3:00pm"},
+ {day:4,group:"Form 3",time:"1:00pm",end:"2:00pm"},
+ {day:5,group:"Form 3",time:"1:00pm",end:"2:00pm"}
+];
+const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const primary=["Class 6A","Class 6B","Form 1A"];
+const jhs=["Form 1B","Form 2","Form 3"];
+const jhs3=[
+ {week:6,type:"even",day:"Tuesday",time:"Time not specified"},
+ {week:8,type:"even",day:"",time:"6:00am – 7:00am"},
+ {week:10,type:"even",day:"",time:"Time not specified"},
+ {week:12,type:"even",day:"",time:"Time not specified"},
+ {week:14,type:"even",day:"",time:"Time not specified"},
+ {week:5,type:"odd",day:"Monday",time:"Time not specified"},
+ {week:7,type:"odd",day:"",time:"5:00pm – 6:00pm"},
+ {week:9,type:"odd",day:"",time:"Time not specified"},
+ {week:11,type:"odd",day:"Friday",time:"Time not specified"},
+ {week:13,type:"odd",day:"",time:"5:00pm – 6:00pm"}
+];
+let activeView="primary", timer=null, sentKeys=new Set();
+const $=id=>document.getElementById(id);
+function timeToMinutes(s){let m=s.match(/(\d{1,2}):(\d{2})(am|pm)/i);if(!m)return null;let h=+m[1]%12;if(m[3].toLowerCase()==="pm")h+=12;return h*60+(+m[2]);}
+function toDate(day,time){let mins=timeToMinutes(time);if(mins===null)return null;let now=new Date();let d=new Date(now);let delta=(day-now.getDay()+7)%7;d.setDate(now.getDate()+delta);d.setHours(Math.floor(mins/60),mins%60,0,0);if(delta===0&&d<=now)d.setDate(d.getDate()+7);return d;}
+function fmt(d){return d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});}
+function renderToday(){let now=new Date(), todays=schedule.filter(x=>x.day===now.getDay()).sort((a,b)=>timeToMinutes(a.time)-timeToMinutes(b.time));$('todaySummary').textContent=`${days[now.getDay()]}, ${now.toLocaleDateString()} · ${todays.length} scheduled lesson${todays.length===1?"":"s"} in the regular timetable.`;$('todayLessons').innerHTML=todays.length?todays.map(x=>`<div class="lesson"><div><strong>${x.group}</strong><small>${x.time} – ${x.end}</small></div><span class="badge">Regular week</span></div>`).join(""):'<p class="small">No regular lessons listed for today.</p>';}
+function renderTable(){
+ let html="";
+ if(activeView==="primary"||activeView==="jhs"){
+  let groups=activeView==="primary"?primary:jhs;
+  html='<div style="overflow-x:auto"><table><thead><tr><th>Day</th>'+groups.map(g=>`<th>${g}</th>`).join("")+'</tr></thead><tbody>';
+  for(let d=1;d<=5;d++){html+=`<tr><td class="day">${days[d]}</td>`+groups.map(g=>{let x=schedule.find(x=>x.day===d&&x.group===g);return x?`<td>${x.time} – ${x.end}</td>`:'<td class="empty">—</td>'}).join("")+'</tr>'}
+  html+='</tbody></table></div>';
+ }else{
+  html='<div style="overflow-x:auto"><table><thead><tr><th>Week</th><th>Type</th><th>Day noted</th><th>Time / note</th></tr></thead><tbody>';
+  jhs3.forEach(x=>html+=`<tr><td>Week ${x.week}</td><td>${x.type==="even"?"Even":"Odd"}</td><td>${x.day||"Not clear in original"}</td><td>${x.time}</td></tr>`);
+  html+='</tbody></table></div>';
+ }
+ $('timetable').innerHTML=html;
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeView=b.dataset.view;renderTable();});
+function updateStatus(msg,warn=false){$('notifyStatus').textContent=msg;$('notifyStatus').className='status'+(warn?' warn':'');}
+$('enableBtn').onclick=async()=>{if(!('Notification'in window)){updateStatus("This browser does not support notifications. Try Chrome on Android.",true);return;}let p=await Notification.requestPermission();updateStatus(p==="granted"?"Notifications enabled. Tap “Start reminders” to begin checking lessons.": "Notifications were not allowed. Enable them in your browser settings.",p!=="granted");};\n$('testBtn').onclick=async()=>{if(!('Notification'in window)){updateStatus("This browser does not support notifications. Try Chrome on Android.",true);return;}if(Notification.permission!=="granted"){updateStatus("Tap Enable notifications and allow permission first.",true);return;}await notify("Maths Reminder test","If you can see this, notifications are working.");updateStatus("Test notification requested. Check your notification shade.");};
+async function notify(title,body){
+ let shown=false;
+ try { if ('serviceWorker' in navigator && Notification.permission === "granted") {
+   const reg = await navigator.serviceWorker.ready;
+   if (reg && reg.showNotification) { await reg.showNotification(title,{body,tag:title+body,vibrate:[200,100,200]}); shown=true; }
+ } } catch(e) {}
+ if (!shown && 'Notification' in window && Notification.permission === "granted") {
+   try { new Notification(title,{body,tag:title+body}); shown=true; } catch(e) {}
+ }
+ if ($('sound').value==="beep") { try { let a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.07;o.start();setTimeout(()=>{o.stop();a.close()},350); } catch(e) {} }
+ if (!shown) { $('notifyStatus').textContent = "Reminder due: " + title + " — " + body + " (browser notification could not be displayed)."; $('notifyStatus').className="status warn"; }
+}
+function checkReminders(){
+ let now=new Date(),lead=+$('lead').value;
+ schedule.forEach(x=>{let d=toDate(x.day,x.time);if(!d)return;let diff=Math.round((d-now)/60000);let key=`${x.group}-${d.toDateString()}-${x.time}`;if(diff>=0&&diff<=lead&&!sentKeys.has(key)){notify("Maths lesson soon",`${x.group} starts at ${x.time} (${diff===0?"now":`in ${diff} minute${diff===1?"":"s"}`}).`);sentKeys.add(key);}});
+ let customs=JSON.parse(localStorage.getItem("mathsCustomReminders")||"[]");
+ customs.forEach((x,i)=>{let d=new Date(x.datetime),diff=Math.round((d-now)/60000),key="custom-"+i+"-"+x.datetime;if(diff<=0&&diff>=-1&&!sentKeys.has(key)){notify("Personal reminder",x.title);sentKeys.add(key);}});
+}
+$('startBtn').onclick=()=>{if(timer)clearInterval(timer);checkReminders();timer=setInterval(checkReminders,20000);localStorage.setItem("mathsRemindersRunning","yes");updateStatus("Reminders are running while this app stays open. Allow notifications and keep your phone from putting the browser to sleep.");};
+$('stopBtn').onclick=()=>{if(timer)clearInterval(timer);timer=null;localStorage.setItem("mathsRemindersRunning","no");updateStatus("Reminders paused. Open this app and tap Start reminders when ready.",true);};
+function renderCustom(){let a=JSON.parse(localStorage.getItem("mathsCustomReminders")||"[]");$('customList').innerHTML=a.map((x,i)=>`<div class="lesson"><div><strong>${x.title}</strong><small>${new Date(x.datetime).toLocaleString()}</small></div><button class="secondary" onclick="deleteCustom(${i})">Delete</button></div>`).join("")||'<p class="small">No personal reminders added.</p>';}
+window.deleteCustom=i=>{let a=JSON.parse(localStorage.getItem("mathsCustomReminders")||"[]");a.splice(i,1);localStorage.setItem("mathsCustomReminders",JSON.stringify(a));renderCustom();};
+$('addCustom').onclick=()=>{let title=$('customTitle').value.trim(),date=$('customDate').value,time=$('customTime').value;if(!title||!date||!time){alert("Enter a title, date and time.");return;}let a=JSON.parse(localStorage.getItem("mathsCustomReminders")||"[]");a.push({title,datetime:date+"T"+time});a.sort((x,y)=>x.datetime.localeCompare(y.datetime));localStorage.setItem("mathsCustomReminders",JSON.stringify(a));$('customTitle').value="";renderCustom();};
+$('saveWeek').onclick=()=>{localStorage.setItem("mathsWeekType",$('weekType').value);localStorage.setItem("mathsWeekNumber",$('weekNumber').value);$('weekStatus').textContent=`Saved: Week ${$('weekNumber').value} (${ $('weekType').value } weeks). Change this when the school week changes.`;};
+$('weekType').value=localStorage.getItem("mathsWeekType")||"even";$('weekNumber').value=localStorage.getItem("mathsWeekNumber")||"6";
+$('weekStatus').textContent=`Selected: Week ${$('weekNumber').value} (${ $('weekType').value } weeks).`;
+renderToday();renderTable();renderCustom();
+if(localStorage.getItem("mathsRemindersRunning")==="yes"){updateStatus("Reminders were previously running. Tap Start reminders to restart the checks.",true);}
+if("serviceWorker"in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
